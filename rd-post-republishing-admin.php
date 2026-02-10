@@ -64,6 +64,18 @@ register_deactivation_hook( __FILE__, 'deactivate_rd_post_republishing_admin' );
  */
 require plugin_dir_path( __FILE__ ) . 'includes/class-rd-post-republishing-admin.php';
 
+// 5. Setup (database tables, static config)
+require plugin_dir_path( __FILE__ ) . 'setup/index.php';
+
+// 6. Helpers FIRST (they have no dependencies)
+require plugin_dir_path( __FILE__ ) . 'src/helpers/index.php';
+
+// 7. Services SECOND (may depend on helpers)
+require plugin_dir_path( __FILE__ ) . 'src/services/index.php';
+
+// 8. Controllers LAST (depend on both helpers and services)
+require plugin_dir_path( __FILE__ ) . 'src/controllers/index.php';
+
 /**
  * Begins execution of the plugin.
  *

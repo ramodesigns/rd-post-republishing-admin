@@ -29,3 +29,8 @@
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
+
+require_once plugin_dir_path( __FILE__ ) . 'setup/Init_Setup.php';
+Init_Setup::drop_preferences_table();
+Init_Setup::drop_license_table();
+Init_Setup::drop_action_log_table();
