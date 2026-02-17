@@ -104,6 +104,10 @@ class Rd_Post_Republishing_Admin_Admin {
 		// Per-page JS
 		if ( $hook === $this->hook_licensed_domains ) {
 			wp_enqueue_script( $this->plugin_name . '-licensed-domains', plugin_dir_url( __FILE__ ) . 'js/rd-post-republishing-admin-licensed-domains.js', array( 'jquery' ), $this->version, false );
+			wp_localize_script( $this->plugin_name . '-licensed-domains', 'rdLicensedDomains', array(
+				'restUrl' => rest_url( 'postrepublishing/v1/license' ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+			) );
 		}
 
 		if ( $hook === $this->hook_subscription_details ) {
