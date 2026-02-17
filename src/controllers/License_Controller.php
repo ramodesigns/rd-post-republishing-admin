@@ -95,6 +95,18 @@ class License_Controller {
             ),
         ));
 
+        // List licenses for the current user
+        register_rest_route($this->namespace, '/list', array(
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => array($this, 'handle_list'),
+            'permission_callback' => array($this, 'check_authentication'),
+        ));
+        register_rest_route($this->namespace, '/listpublic', array(
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => array($this, 'handle_list'),
+            'permission_callback' => array($this, 'check_debug_authorization'),
+        ));
+
         // Retrieve license by domain
         register_rest_route($this->namespace, '/domain', array(
             'methods'             => WP_REST_Server::READABLE,
@@ -147,10 +159,38 @@ class License_Controller {
         }
     }
 
+    public function handle_list($request) {
+        try {
+            $current_user = wp_get_current_user();
+            $username = $current_user->user_login;
+            $result = $this->service->get_licenses_by_user($username);
+
+            if (is_wp_error($result)) {
+                return new WP_REST_Response(array(
+                    'success'   => false,
+                    'message'   => $result->get_error_message(),
+                    'errors'    => array($result->get_error_message()),
+                    'timestamp' => current_time('mysql'),
+                ), 400);
+            }
+
+            return new WP_REST_Response(array(
+                'success'   => true,
+                'message'   => 'Licenses retrieved successfully.',
+                'data'      => $result,
+                'timestamp' => current_time('mysql'),
+            ), 200);
+        } catch (Exception $e) {
+            return new WP_Error('server_error', $e->getMessage(), array('status' => 500));
+        }
+    }
+
     public function handle_clear($request) {
         try {
             $id = $request->get_param('id');
-            $result = $this->service->delete_license($id);
+            $current_user = wp_get_current_user();
+            $username = $current_user->user_login;
+            $result = $this->service->delete_license($id, $username);
 
             if (is_wp_error($result)) {
                 $status = $result->get_error_data() && isset($result->get_error_data()['status'])
@@ -234,7 +274,7 @@ class License_Controller {
                 __('Authentication required. Please provide valid application password credentials.'),
                 array('status' => 401));
         }
-        if (!current_user_can('edit_posts')) {
+        if (!current_user_can('read')) {
             return new WP_Error('rest_forbidden',
                 __('You do not have sufficient permissions to access this endpoint.'),
                 array('status' => 403));

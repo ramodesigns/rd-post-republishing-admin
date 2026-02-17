@@ -46,7 +46,7 @@ class License_Service {
         );
     }
 
-    public function delete_license($id) {
+    public function delete_license($id, $username = null) {
         global $wpdb;
         $table_name = Init_Setup::get_license_table_name();
 
@@ -62,6 +62,10 @@ class License_Service {
 
         if (!$existing) {
             return new WP_Error('license_not_found', 'License not found.', array('status' => 404));
+        }
+
+        if ($username && $existing['username'] !== $username) {
+            return new WP_Error('license_forbidden', 'You do not have permission to delete this license.', array('status' => 403));
         }
 
         $deleted = $wpdb->delete(
@@ -118,5 +122,22 @@ class License_Service {
         }
 
         return $result;
+    }
+
+    public function get_licenses_by_user($username) {
+        global $wpdb;
+        $table_name = Init_Setup::get_license_table_name();
+
+        $username = sanitize_text_field($username);
+        if (empty($username)) {
+            return new WP_Error('invalid_username', 'A valid username is required.');
+        }
+
+        $results = $wpdb->get_results(
+            $wpdb->prepare("SELECT * FROM $table_name WHERE username = %s ORDER BY timestamp DESC", $username),
+            ARRAY_A
+        );
+
+        return $results ?: array();
     }
 }
